@@ -582,7 +582,6 @@ slot += Borgnjor's Revivification:R
 slot += Song of Slaying:S
 slot += Swiftness:S
 
-item_slot ^= ration:f
 item_slot ^= ring of protection from fire:F
 item_slot ^= ring of protection from cold:C
 item_slot ^= ring of protection from magic:M
