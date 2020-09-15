@@ -1,5 +1,4 @@
-# TEAMCAPTAIN Mandevil
-### RC FILE last updated September 5, 2018 for Version 0.22
+### RC FILE last updated July 8, 2020 for Version 0.26(trunk)
 ### Lots of credit to HilariousDeathArtist as it forms the core of this rcfile.
 
 
@@ -9,6 +8,7 @@
     load_message()
     AnnounceDamage()
     OpenSkills()
+    fmore_early_threats()
   end
 >
 
@@ -32,7 +32,7 @@
 {
 function safe_upstairs()
   if you.branch() == "Gauntlet" then
-     crawl.formatted_mpr("Really leave this labyrinth?", "prompt")
+     crawl.formatted_mpr("Really leave this Gauntlet?", "prompt")
      local res = crawl.getch()
      if string.lower(string.char(res)) == "y" then
        crawl.sendkeys("<")
@@ -115,6 +115,34 @@ end
 ---- End char_dump ----
 -----------------------
 }
+
+{
+local fmet = true
+function fmore_early_threats()
+  if you.xl() > 13 and fmet then
+    crawl.setopt("force_more_message -= centaur.* comes? into view")
+    crawl.setopt("force_more_message -= hydra.* comes? into view")
+    crawl.setopt("force_more_message -= killer bee.* comes? into view")
+    crawl.setopt("force_more_message -= electric eel.* comes? into view")
+    fmet = false
+  end
+end
+}
+
+{
+local cheiwalk = true
+function toggle_cheiwalk()
+  if cheiwalk then
+    crawl.setopt("force_more_message -= comes? into view")
+    crawl.mpr("Cheiwalk mode is off.")
+  else
+    crawl.setopt("force_more_message += comes? into view")
+    crawl.mpr("Cheiwalk mode is on.")
+  end
+  cheiwalk = not cheiwalk
+end
+}
+
 
 ###############
 # Damage Calc #
@@ -254,129 +282,6 @@ end
 }
 
 
-
-# Skillto function. Partially deprecated with new skill targets
-<
-if you.turns() > 1 then
-  pskill = c_persist.pskill
-  pgoal = c_persist.pgoal
-end
-
-skill_list = {f="Fighting",s="Short Blades",l="Long Blades",x="Axes",
-  m="Maces & Flails",p="Polearms",v="Staves",u="Unarmed Combat",b="Bows",
-  c="Crossbows",r="Throwing",g="Slings",a="Armour",d="Dodging",h="Shields",
-  S="Spellcasting",J="Conjurations",H="Hexes",C="Charms",U="Summonings",
-  N="Necromancy",L="Translocations",M="Transmutations",F="Fire Magic",
-  I="Ice Magic",A="Air Magic",E="Earth Magic",P="Poison Magic",i="Invocations",
-  e="Evocations",t="Stealth"}
-
-function train_only(sk)
-  for k, v in pairs(skill_list) do you.train_skill(v, 0) end
-  you.train_skill(sk, 1)
-end
-
-local _ready = ready
-function ready()
-  if _ready then _ready() end
-  if pskill and you.skill(pskill) >= pgoal then
-    crawl.mpr(('<yellow>Finished training %s to level %1.1f.</yellow>'):format(pskill, pgoal))
-    crawl.more()
-    pskill = nil; pgoal = nil
-    skillto()
-  end
-  c_persist.pskill = pskill
-  c_persist.pgoal = pgoal
-end
->
-
-{
-function skillto()
-  function f(s)
-    s = string.gsub(s, '((%S*)([%[%{])(%w)[%]%}](%S*))',
-      function(full, pre, brace, letter, post)
-        local k = brace == '[' and letter:lower() or letter:upper()
-        local skill = skill_list[k]
-        local stripped = pre .. letter .. post
-        if pskill and skill == pskill then
-          return '<white>' .. full .. '</white>'
-        elseif you.skill(skill) == 27.0 then
-          return '<yellow>' .. stripped .. '</yellow>'
-        elseif you.can_train_skill(skill) then
-          return full
-        else
-          return '<darkgrey>' .. stripped .. '</darkgrey>'
-        end
-      end)
-    s = string.gsub(s, '%[', '<lightred>')
-    s = string.gsub(s, '%]', '</lightred>')
-    s = string.gsub(s, '%{', '<lightblue>')
-    s = string.gsub(s, '%}', '</lightblue>')
-    return s
-  end
-
-  function print_skills()
-    crawl.clear_messages(true)
-    crawl.mpr(f('[F]gt [S]bl [L]bl A[x]s [M]&F [P]la St[v] [U]C      [B]ws '
-              ..'[C]rb Th[r] Sl[g] [A]rm [D]dg S[h]d'), 2)
-    crawl.mpr(f('{S}pc Cn{J} {H}ex {C}ha S{U}m {N}ec Tr{L} Tr{M} {F}ir {I}ce '
-              ..'{A}ir {E}ar {P}oi [I]nv [E]vo S[t]h'), 2)
-  end
-
-  print_skills()
-  crawl.mpr(f('Train which skill ([Letter] or {Shift+Letter})? '), 2)
-  new_pskill = skill_list[string.char(crawl.getch())]
-
-  print_skills()
-  if not new_pskill then
-    crawl.mpr('Okay, then.', 2)
-    return
-  elseif not you.can_train_skill(new_pskill) then
-    crawl.mpr("You can't currently train " .. new_pskill .. ".", 29)
-    crawl.more()
-    return skillto()
-  end
-
-  local current = you.skill(new_pskill)
-  local goalstring = ''
-  if pskill and new_pskill == pskill then
-    goalstring = ('<white> -> %1.1f</white>'):format(pgoal)
-  end
-  crawl.mpr(('Train %s to which level (currently at %1.1f%s)? '):
-            format(new_pskill, current, goalstring), 2)
-  new_pgoal = tonumber(crawl.c_input_line())
-
-  if not new_pgoal then
-    return skillto()
-  elseif current >= new_pgoal then
-    crawl.mpr(("You're already at level %1.1f!"):format(current), 29)
-    crawl.more()
-    return skillto()
-  end
-
-  pskill = new_pskill
-  pgoal = new_pgoal
-  train_only(pskill)
-  crawl.mpr(("Started training %s to %1.1f."):format(pskill, pgoal), 2)
-end
-
-function unskillto()
-  if pskill then
-    crawl.mpr("Skills adjusted manually; disabling skillto.", 29)
-    pskill = nil; pgoal = nil
-  end
-  crawl.sendkeys("m")
-end
-
-function skillto_info()
-  if pskill then
-    crawl.mpr(("You are training %s (%1.1f <white>-> %1.1f</white>)."):
-              format(pskill, you.skill(pskill), pgoal))
-  end
-  crawl.sendkeys("@")
-end
-}
-
-
 # 1 - Starting Screen
 # -------------------
 
@@ -416,6 +321,86 @@ default_manual_training = true
 ae := autopickup_exceptions
 ae += useless_item, dangerous_item, evil_item
 
+# Autopickup artefacts
+ae += <artefact
+
+
+# Armour/Weapon autopickup by rwbarton, enhanced by HDA
+{
+add_autopickup_func(function(it, name)
+
+  if it.is_useless then return false end
+  
+  if name:find("dispersal") and name:find("boomerang") then return true end
+  if name:find("throwing net") then return true end
+
+  local class = it.class(true)
+  local armour_slots = {cloak="Cloak", helmet="Helmet", gloves="Gloves", boots="Boots", body="Armour", shield="Shield"}
+
+  if (class == "armour") then
+    sub_type = it.subtype()
+    equipped_item = items.equipped_at(armour_slots[sub_type])
+
+    if (sub_type == "cloak") or (sub_type == "helmet") or (sub_type == "gloves") or (sub_type == "boots") then
+      if (you.race() == "Octopode") then
+        if sub_type == "helmet" then
+           return it.artefact or it.branded or it.ego
+        end
+        return false
+      end
+      if you.race() == "Minotaur" then
+        if sub_type == "helmet" then
+            return it.artefact or it.branded or it.ego
+        end
+      end
+      if you.race() == "Felid" then
+        return false
+      end
+      if not equipped_item then
+        return true
+      else
+        return it.artefact or it.branded or it.ego
+      end
+    end
+
+    if (sub_type == "body") then
+      if you.race():find("Draconian") then
+         return false
+      end
+      if you.race() == "Felid" then
+        return false
+      end
+      if you.race() == "Octopode" then
+        return false
+      end
+      if equipped_item then
+        local armourname = equipped_item.name()
+        if equipped_item.artefact or equipped_item.branded or equipped_item.ego or (equipped_item.plus > 2) or armourname:find("dragon") or armourname:find("troll") then
+          return it.artefact
+        else
+          return it.artefact or it.branded or it.ego
+        end
+      end
+      return true
+    end
+
+    if (sub_type == "shield") then
+      if equipped_item then
+        if equipped_item.artefact or equipped_item.branded or equipped_item.ego or (equipped_item.plus > 2) then
+          return it.artefact or it.branded or it.ego
+        else
+          return true
+        end
+      else
+        return it.artefact or it.branded or it.ego
+      end
+    end
+  end
+
+  
+end)
+}
+
 
 
 # 3-f : Travel and Exploration
@@ -431,7 +416,7 @@ explore_stop += altars,portals,branches,runed_doors,greedy_sacrificeable
 # Adjusts how much autoexplore favours attempting to discover room perimeters and corners.
 # At values higher than 0, autoexplore will more heavily favour visiting squares that are next to walls
 # reasonable values range from 0 to 10 maybe?
-explore_wall_bias = 5
+explore_wall_bias = 6
 
 # Disables key press from stopping autoexplore
 travel_key_stop = false
@@ -466,21 +451,17 @@ ignore += You displace your
 
 # Bad things -- Stop autotravel for these events
 stop += (blundered into a|invokes the power of) Zot
-#stop += (devoid of blood|starving)
-#stop += A huge blade swings out and slices into you[^r]
 #stop += An alarm trap emits a blaring wail
 stop += flesh start
 #stop += found a zot trap
 #stop += hear a soft click
 stop += lose consciousness
-stop += sense of stasis
+#stop += sense of stasis
 stop += Wait a moment
 stop += wrath finds you
 stop += You fall through a shaft
 
 # Expiring effects -- Stop autotravel for spells beginning to expire (to allow recasts)
-# Control Teleport
-# stop += uncertain
 # Deaths Door
 stop += time is quickly running out
 stop += life is in your own
@@ -508,7 +489,6 @@ stop += start to feel a little slower
 : end
 
 # Good things - Bad things wearing off
-stop += contamination has completely
 stop += You are no longer firmly anchored in space
 
 #Ally actions?
@@ -522,18 +502,17 @@ stop += You are no longer firmly anchored in space
 delay_safe_poison = 50:30
 runrest_ignore_monster += butterfly:1
 rest_wait_both = true
+rest_wait_ancestor = true
 explore_auto_rest = true
 
 # This list needs to be updated.
 auto_exclude += Agnes, Aizul, Arachne, Asterion, Bai Suzhen, Blork, Boris, Crazy Yiuf, Donald, Dowan
 auto_exclude += Duvessa, Edmund, Erica, Erolcha, Eustachio, Fannar, Frances, Frederick, Gastronok
-auto_exclude += Grinder, Grum, Harold, Ijyb, Ilsuiw, Jessica, Jorgrun, Joseph, Kirke, Louise, Maggie, Mara
+auto_exclude += Grinder, Grum, Harold, Ijyb, Ilsuiw, Jessica, Jorgrun, Joseph, Kirke, Louise, Maggie, Margery, Mara
 auto_exclude += Maurice, Menkaure, Mennas, Natasha, Nergalle, Nessos, Nikola, Pikel
 auto_exclude += Polyphemus, Prince Ribbit, Psyche, Robin, Roxanne, Rupert, Saint Roka, Sigmund, Snorg
-auto_exclude += Sojobo, Sonja, Terence, Urug, Xtahua, hog, slave
+auto_exclude += Sojobo, Sonja, Terence, Urug, Xtahua, hog, lemure
 
-
-wall_jump_prompt = true
 
 # 3-g : Command Enhancements
 # --------------------------
@@ -544,8 +523,6 @@ allow_self_target = prompt
 
 confirm_butcher = never
 easy_eat_chunks = true
-auto_eat_chunks = true
-auto_butcher = hungry
 
 # Spell slots
 
@@ -555,15 +532,14 @@ slot := spell_slot
 # Try to keep in alphabetic order (by keybind)
 slot += Freeze:ab
 slot += Magic Dart:ab
-slot += Flame Tongue:ab
 slot += Sting:ab
 slot += Searing Ray:ab
-slot += Bolt:ab
-slot += Statue Form:a
+slot += Statue Form:ab
 slot += Ensorcelled Hibernation:a
 slot += Call Canine Familiar:c
 slot += Call Imp:c
 slot += Confuse:c
+slot += Confusing Touch:ca
 slot += Conjure Flame:c
 slot += Spider Form:c
 slot += Summon Lighting Spire:d
@@ -589,9 +565,6 @@ slot += Iskenderun's Mystic Blast:x
 slot += Lightning Bolt:x
 slot += Mephitic Cloud:x
 slot += Stone Arrow:x
-slot += Throw Flame:ab
-slot += Throw Frost:ab
-slot += Throw Icicle:x
 slot += Vampiric Draining:x
 slot += Iskenderun's Battlesphere:z
 slot += Lee's Rapid Deconstruction:z
@@ -616,7 +589,7 @@ item_slot ^= ring of protection from magic:M
 
 ability_slot ^= Potion Petition:A
 
-autofight_stop = 65
+autofight_stop = 30
 autofight_throw = false
 autofight_fire_stop = true
 autofight_caught = true
@@ -634,7 +607,9 @@ stat_colour = 3:red, 7:lightred
 show_more = false
 small_more = true
 
-view_delay = 600
+view_delay = 300
+
+use_animations -= branch_entry
 
 # Set Alias
 more := force_more_message
@@ -644,18 +619,7 @@ more =+ You can't wield that with a shield
 # Important dungeon features
 more += invites you to visit
 more += interdimensional caravan
-more += You hear.*rusting.*drain
-more += You hear the drain falling apart
-more += The drain falls to bits
 more += The mighty Pandemonium lord.*resides here
-more += You hear.*ticking.*clock
-more += You hear.*crackle.*magical portal
-more += You hear.*creaking.*oriflamme
-more += You hear.*crackling.*archway
-more += You hear.*rumble.*avalanche
-more += You hear.*hiss.*sand
-more += One of the plants suddenly grows acid sacs
-more += Another plant grows acid sacs
 more += distant snort
 more += Found a gateway leading out of the Abyss
 more += Found a staircase to the Ecumenical Temple
@@ -668,17 +632,13 @@ more += sound of rushing water
 more += Found a frozen archway
 more += Found a labyrinth entrance
 more += You have a vision of.*gates?
-more += Nemelex gives you another card to finish dealing
 more += Fedhas invokes the elements against you
 more += Lugonu sends minions to punish you
-more += You have no means to grasp a wand firmly enough
-more += Done waiting
+# more += Done waiting
 more += (The|Your).*falls away!
-more += acid corrodes your equipment
 more += cast banishment
 more += cast paralyse
 more += cast Torment
-more += MASSIVE DAMAGE
 more += Your body shudders with the violent release of wild energies
 more += is duplicated
 more += You feel sluggish
@@ -707,32 +667,38 @@ more += Found .* abyssal rune of Zot
 
 # Dangerous Monsters
 more += giant eyeball.*comes? into view
+more += tormentor.*comes? into view
+more += flayed ghost.*comes? into view
+more += fiend.*comes? into view
+more += hellion.*comes? into view
+more += curse skull.*comes? into view
+more += ironbrand convoker.*comes? into view
+more += Lich.*comes? into view
+more += shrike.*comes? into view
+more += juggernaut.*comes? into view
+more += dream sheep.*comes? into view
 more += The blast of calcifying dust hits you[^r]
 more += You are engulfed in calcifying dust
 more += begins to recite a word of recall
 more += You are engulfed in dark miasma
-more += The ghost moth stares at you
-more += You feel you are being watched by something
+more += swoops through the air toward you
+more += orange crystal statue.*comes? into view
 more += Its appearance distorts for a moment
+more += You feel haunted
+more += Mara shimmers
+more += There is a horrible\, sudden wrenching feeling in your soul
+more += Mara seems to draw the.*out of itself
 
 # Interrupts for unexpected situations
 # more += The.*shudders
-more += A magical barricade bars your way
-more += The shadow imp is revulsed by your support of nature
 more += Something interferes with your magic
 more += You feel a genetic drift
 more += You don't.* that spell
 more += You fail to use your ability
 more += You miscast
 more += You cannot teleport right now
-more += appears in a shower of sparks
 more += It doesn't seem very happy
-more += Some monsters swap places
-more += This wand has no charges
 more += You are held in a net
-more += You have disarmed
-more += You can't gag anything down
-more += You don't have any such object
 more += do not work when you're silenced
 more += You cannot cast spells when silenced
 more += The barbed spikes dig painfully into your body as you move
@@ -740,72 +706,37 @@ more += The water nymph flows with the water
 more += You can't unwield
 more += You don't have enough magic
 more += You haven't enough magic at the moment
-more += You feel your control is inadequate
-more += Your guardian golem overheats
 more += You have finished your manual
-more += You can't take your gloves off to put on a ring
 more += You feel your power leaking away
 more += You feel your power drain away
 more += Space warps horribly around you
-more += Your damage is reflected back at you
-more += dark mirror aura disappears
 more += Space bends around you
 more += The.*grabs you[^r]
 more += Your attempt to break free
-more += The.*is a mimic
-more += The.*offers itself to Yredelemnul
 more += You are blown backwards
-more += Agitated ravens fly out from beneath the
 more += goes berserk
-more += are blown away by the wind
-more += Your magical defenses are stripped away
-more += appears out of thin air
 more += You feel less protected from missiles
 more += Your body is wracked with pain
 more += surroundings become eerily quiet
 more += The pull of.*song draws you forwards
-more += comes (up|down) the stairs
-more += The jumping spider pounces on you [^but]
 more += Wisps of shadow swirl around
 more += begins to accept its allies' injuries
-more += doors? slams? shut
 more += Miasma billows from the
 more += You feel.*firmly anchored in space
 more += You stumble into the trap
-more += You have no appropriate body parts free
 more += drinks a potion
 more += You stop (a|de)scending the stairs
-more += The walls disappear
 more += too hungry
-more += The spell fizzles
-more += Your body armour is too heavy
-more += stands defiantly in death's doorway
-more += is no longer invulnerable
-more += This potion can/'t work under stasis
-more += Kikubaaqudgha will now enhance your necromancy
-more += Lugonu will now corrupt your weapon
-more += The Shining One will now bless
 more += You cannot cast spells while unable to breathe
-more += Your fit of retching subsides
 more += You are wearing\:
 more += The walls and floor vibrate strangely for a moment
-more += You feel your flesh start to rot away
-more += You sense the presence of something unfriendly
 
 # Interrupts for Bad things
 more += Your surroundings flicker
-more += You feel yourself grow more vulnerable to poison
-more += You feel less vulnerable to poison
-more += The poison in your body grows stronger
-more += burn any scroll you tried to read
 more += Your icy (shield|armour) evaporates
 more += Your.*(shield|armour) melts away
-more += sense of stasis
-more += You smell decay. (^Yuck!)
 more += The writing blurs in front of your eyes
 more += You fall through a shaft
-more += A huge blade swings out and slices into you
-more += your magic stops regenerating
 more += (blundered into a|invokes the power of) Zot
 more += Ouch! That really hurt!
 more += dispelling energy hits you
@@ -814,23 +745,18 @@ more += You feel drained
 more += You are (blasted|electrocuted)
 more += You feel uncertain
 more += (You are|You're) poisoned
-more += (You are|You're) more poisoned
+#more += (You are|You're) more poisoned
 more += (You are|You're) lethally poisoned
 more += (You are|You're) confused
-more += (You are|You're) more confused
+#more += (You are|You're) more confused
 more += (You are|You're) too confused
 more += (starving|devoid of blood)
-more += You need to eat something NOW
 more += You are engulfed in mutagenic fog
 more += wrath finds you
 more += lose consciousness
 more += You are too injured to fight blindly
 more += Green shoots are pushing up through the earth
-more += your.*devoured
-more += You are drained
 more += shoots a curare
-more += You feel your attacks grow feeble
-more += You are blown backwards by the freezing wind
 more += You are knocked back by the lance of force
 more += You are knocked back by the blast of cold
 more += You are knocked back by the great wave of water
@@ -839,24 +765,18 @@ more += You are trampled
 more += Okawaru sends forces against you
 more += You are slowing down.
 more += You flicker for a moment.
-more += You flicker back
 more += The.*is unaffected
 more += You (become entangled|are caught) in (a|the) (web|net)
-more += The arrow of dispersal hits you[^r]
 more += The forest starts to sway and rumble
 more += Vines fly forth from the trees!
 more += A tree reaches out and hits you!
 more += You are hit by a branch
-more += The.*answers the.*call
 more += The air twists around and violently strikes you in flight
 more += The.*engulfs you in water
 more += The power of Zot is invoked against you
-more += The acid corrodes your
-more += You feel (dopey|clumsy|weak)
 more += The air around.*erupts in flames
 more += Terrible wounds (open|spread) all over you
 more += You are encased in ice
-more += Your.*suddenly stops moving
 more += You suddenly stop moving
 more += Your surroundings seem slightly different
 more += Your resistance to elements expires
@@ -871,16 +791,9 @@ more += The.*seems to speed up
 more += steals.*your
 more += infuriates you
 more += \'s.*reflects
-more += You cannot afford.*fee
 more += You can move again
 more += You slip out of the net
 more += You.*and break free
-more += You feel your flesh rotting away
-more += You feel your translocation being delayed
-more += There is a sealed passage
-more += Something appears in a flash of light
-more += You feel your rage building
-more += You turn into a fleshy mushroom
 more += staircase.*moves
 
 # Interrupts for Hell effects
@@ -909,7 +822,6 @@ more += You feel yourself slow down
 more += You are starting to lose your buoyancy
 more += Your hearing returns
 more += Your transformation is almost over
-more += Your skin feels tender
 more += You have a feeling this form
 more += You feel yourself come back to life
 more += time is quickly running out
@@ -1001,24 +913,15 @@ more += Vashnia.*(comes? into view|opens the)
 more += Xtahua.*(comes? into view|opens the)
 
 # More dangerous monsters
-#more += 's ghost.*(comes? into view|opens the)
-#more += A player ghost.*(comes? into view|opens the)
 more += shadow demons?.*(comes? into view|opens the)
 more += boggarts?.*(comes? into view|opens the)
 more += giant orange brains?.*(comes? into view|opens the)
 
 # Others
-# more += You have reached level
-more += Your scales start
 more += You can now
-more += You now sometimes bleed smoke
 more += You.*no longer.*bleed smoke
-more += Your shadow now sometimes tangibly mimics your actions
-more += Your shadow no longer tangibly mimics your actions
-more += Sif Muna is protecting you from the effects of miscast magic
 more += You can no longer
 more += Your.*can no longer
-more += The rod doesn't have enough magic points
 more += You feel monstrous
 more += Jiyva alters your body
 : if you.god() == "Xom" then
@@ -1028,7 +931,6 @@ more += Jiyva alters your body
 : if not string.find(you.god(), "Jiyva") then
   more += splits in two
 :end
-
 
 cloud_status = true
 
@@ -1085,12 +987,6 @@ menu += $decent:wand of (flame|paralysis|polymorph|disintegration|enslavement|ic
 menu += $good:wand of (acid|digging|clouds|scattershot)
 
 # Food
-menu += $danger:evil_eating
-menu += $danger:rot-inducing
-menu += magenta:mutagenic
-menu += $warning:poisonous
-menu += $boring:inedible
-menu += $good:preferred
 menu += $good:(corpse|chunk)
 menu += $good:(ration)
 
@@ -1107,7 +1003,7 @@ menu += $awesome:scrolls? of (blinking|teleportation)
 menu += $danger:potions? of berserk
 menu += magenta:potions? of mutation
 menu += $decent:potions? of (flight|lignification|ambrosia)
-menu += $good:potions? of (agility|brilliance|cancellation|invisibility|might|resistance)
+menu += $good:potions? of (stabbing|brilliance|cancellation|invisibility|might|resistance)
 menu += $positive:potions? of curing
 menu += $mp:potions? of magic
 menu += $verypositive:potions? of (haste|heal wounds)
@@ -1115,8 +1011,8 @@ menu += $awesome:potions? of experience
 
 # Amulets
 menu += $boring:amulet of (inaccuracy|harm)
-menu += $good:amulet of (guardian spirit|the acrobat|the gourmand)
-menu += $positive:amulet of (faith|rage|reflection|magic regeneration)
+menu += $good:amulet of (guardian spirit|the acrobat)
+menu += $positive:amulet of (faith|reflection|magic regeneration)
 menu += $verypositive:amulet of (regeneration)
 
 # Rings
@@ -1134,7 +1030,7 @@ menu += $good:ring of (.*evasion|.*protection|magical power|wizardry)
 menu += blue:inert
 menu += $good:throwing net
 menu += $good:fan of gales
-menu += $good:lamp of fire
+menu += $good:tin of tremorstones
 menu += $good:phial of floods
 menu += $good:lightning rod
 menu += $decent:box of beasts
@@ -3766,8 +3662,10 @@ msc += mute:in your inventory have.*rotted away
 #channel.plain =
 channel.prompt = $interface
 channel.god = $godaction
+channel.pray = $godaction
 channel.duration = $warning
 channel.danger = $danger
+channel.food = $warning
 channel.warning = $danger
 channel.recovery = $verypositive
 channel.talk = $warning
@@ -3782,7 +3680,6 @@ channel.friend_spell = $takesaction
 channel.friend_action = $takesaction
 channel.monster_damage = mute
 #channel.banishment = --either positive or danger
-channel.rotten_meat = $boring
 channel.equipment = $interface
 #channel.floor =
 channel.multiturn = $boring
@@ -3809,7 +3706,6 @@ ai := autoinscribe
 # Inscribe distortion weapons if you are not worshipping Lugonu
 : if you.god() ~= "Lugonu" then
     ai += distortion:!w
-  ai += (Sonja|Psyche):!w
 : end
 
 ai += (bad|dangerous)_item.*potion:!q
@@ -3823,9 +3719,7 @@ ai += throwing net:=f, !d
 ai += fire dragon scale:rF++, rC-
 ai += gold dragon scale:rC+, rF+, rP+
 ai += ice dragon scale:rC++, rF-
-ai += mottled dragon scale:rSticky
 ai += pearl dragon scale:rN+
-ai += steam dragon scale:rSteam
 ai += storm dragon scale:rElec
 ai += swamp dragon scale:rP+
 ai += quicksilver dragon scale:MR+
@@ -3847,7 +3741,6 @@ ai += scrolls? of vulnerability:!r
 
 # Amulets
 ai += amulet of faith:Faith, !P
-ai += amulet of harm:Harm, !P
 
 # Rings
 ai += ring of fire:rF+, rC-
@@ -3872,7 +3765,6 @@ ai += staff of death:rN+
 ai += staff of energy:+MP, hungerless spells, !d!a
 ai += staff of fire:rF+
 ai += staff of poison:rP+
-ai += staff of power:MP+15, !a
 ai += staff of summoning:!a
 ai += staff of wizardry:wiz+, !a
 
@@ -3884,7 +3776,7 @@ macros += M S ===save_with_message
 macros += M / z.@
 macros += M \{-1011} za@
 macros += M \{-1012} zb@
-macros += M \{-1020} ===skillto
+macros += M \{-1020} ===toggle_cheiwalk
 macros += M < ===safe_upstairs
 
 bindkey = [~] CMD_LUA_CONSOLE
@@ -3924,7 +3816,4 @@ note_all_skill_levels = true
 note_xom_effects = true
 note_chat_messages = true
 
-
-
-rest_wait_both = true
-explore_auto_rest = false
+#tile_player_tile = tile:MONS_BUTTERFLY
