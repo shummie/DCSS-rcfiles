@@ -401,9 +401,9 @@ default_manual_training = true
 # | = staves
 
 : if (you.god():find("Trog")) then
-  autopickup += $?!:"/%}
+  autopickup += $?!:"/}
 : else
-  autopickup += $?!:"/%}|
+  autopickup += $?!:"/}|
 : end
 
 # Unused
