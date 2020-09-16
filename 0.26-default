@@ -957,8 +957,6 @@ $good := lightblue
 $verypositive := lightgreen
 $awesome := lightmagenta
 
-menu += $boring:club
-
 # General
 menu += $boring:(melded)
 menu += $boring:.*useless_item.*
