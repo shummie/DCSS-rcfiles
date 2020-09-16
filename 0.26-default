@@ -460,6 +460,7 @@ stop += lose consciousness
 stop += Wait a moment
 stop += wrath finds you
 stop += You fall through a shaft
+stop += You fall into a shaft
 
 # Expiring effects -- Stop autotravel for spells beginning to expire (to allow recasts)
 # Deaths Door
