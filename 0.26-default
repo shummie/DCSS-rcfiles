@@ -920,6 +920,7 @@ more += boggarts?.*(comes? into view|opens the)
 more += giant orange brains?.*(comes? into view|opens the)
 
 # Others
+more += Something appears at your feet
 more += You can now
 more += You.*no longer.*bleed smoke
 more += You can no longer
