@@ -667,6 +667,7 @@ more += Found .* abyssal rune of Zot
 
 # Dangerous Monsters
 more += giant eyeball.*comes? into view
+more += oklob.* comes? into view
 more += tormentor.*comes? into view
 more += flayed ghost.*comes? into view
 more += fiend.*comes? into view
