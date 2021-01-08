@@ -1,5 +1,6 @@
-# TEAMCAPTAIN mandevil
-# Based off of HilariousDeathArtist's rcfile
+# TEAMNAME TeamSplat
+# TEAMMEMBERS DrMan particleface berryknight malcolmrose dinky
+
 
 # Contents:
 # Search the below terms to get to that section
@@ -32,6 +33,20 @@ use_animations = 0
     OpenSkills()
   end
 >
+
+{
+function safe_upstairs()
+  if you.branch() == "Gauntlet" then
+     crawl.formatted_mpr("Really leave this Gauntlet?", "prompt")
+     local res = crawl.getch()
+     if string.lower(string.char(res)) == "y" then
+       crawl.sendkeys("<")
+     end
+  else
+     crawl.sendkeys("<")
+  end
+end
+}
 
 
 ####################
@@ -193,7 +208,7 @@ auto_exclude += Duvessa, Edmund, Erica, Eustachio, Fannar, Frances, Frederick, G
 auto_exclude += Grum, Harold, Ijyb, Jessica, Jorgrun, Joseph, Kirke, Louise, Mara
 auto_exclude += Maurice, Menkaure, Mennas, Natasha, Nergalle, Nessos, Nikola, Pikel
 auto_exclude += Polyphemus, Prince Ribbit, Psyche, Robin, Roxanne, Saint Roka, Sigmund, Snorg
-auto_exclude += Sojobo, Sonja, Terence, Urug, Xtahua, hog, slave
+auto_exclude += Sojobo, Sonja, Terence, Urug, Xtahua, hog, slave, oklob
 
 ###############
 # Auto Travel #
@@ -259,7 +274,7 @@ stop += (blundered into a|invokes the power of) Zot
 #stop += flesh start
 #stop += found a zot trap
 #stop += hear a soft click
-stop += lose consciousness
+#stop += lose consciousness
 #stop += sense of stasis
 #stop += Wait a moment
 #stop += wrath finds you
@@ -272,21 +287,21 @@ stop += uncertain
 stop += time is quickly running out
 stop += life is in your own
 # Enslavement
-stop += is no longer charmed
+#stop += is no longer charmed
 # Flight
-stop += You are starting to lose your buoyancy
-stop += You lose control over your flight
+#stop += You are starting to lose your buoyancy
+#stop += You lose control over your flight
 # Haste
-stop += You feel yourself slow down
+#stop += You feel yourself slow down
 # Necromutation
-stop += Your transformation is almost over
-stop += You have a feeling this form
-stop += You feel yourself come back to life
+#stop += Your transformation is almost over
+#stop += You have a feeling this form
+#stop += You feel yourself come back to life
 # Shroud
-stop += shroud begins to fray
-stop += shroud unravels
+#stop += shroud begins to fray
+#stop += shroud unravels
 # Swiftness
-stop += start to feel a little slower
+#stop += start to feel a little slower
 
 # Good things - Bad things wearing off
 # stop += contamination has completely
@@ -3253,17 +3268,6 @@ menu += $boring:wand of (flame|random effects)
 menu += $decent:wand of (confusion|paralysis|polymorph|slowing)
 menu += $good:wand of (cold|digging|disintegration|lightning)
 
-# Food
-menu += $danger:evil_eating
-menu += $danger:rot-inducing
-menu += magenta:mutagenic
-menu += $warning:poisonous
-menu += $boring:inedible
-menu += $good:meat ration
-menu += $good:bread ration
-menu += $good:preferred
-menu += $good:(corpse|chunk)
-
 # Scrolls
 menu += $danger:scrolls? of torment
 menu += $boring:scrolls? of (noise|random)
@@ -3368,21 +3372,22 @@ more += Found .* abyssal rune of Zot
 # Dangerous Monsters
 more += giant eyeball.*comes? into view
 more += giant spore.*comes? into view
-more += tormentor.*comes? into view
-more += flayed ghost.*comes? into view
+#more += tormentor.*comes? into view
+#more += flayed ghost.*comes? into view
 more += fiend.*comes? into view
 more += hellion.*comes? into view
 more += silver statue.*comes? into view
 more += curse skull.*comes? into view
-more += ironbrand convoker.*comes? into view
-more += Lich.*comes? into view
+#more += ironbrand convoker.*comes? into view
+#more += Lich.*comes? into view
 more += shrike.*comes? into view
 more += juggernaut.*comes? into view
-more += dream sheep.*comes? into view
-more += The blast of calcifying dust hits you[^r]
-more += You are engulfed in calcifying dust
+#more += dream sheep.*comes? into view
+more += oklob.*comes? into view
+#more += The blast of calcifying dust hits you[^r]
+#more += You are engulfed in calcifying dust
 more += begins to recite a word of recall
-more += You are engulfed in dark miasma
+#more += You are engulfed in dark miasma
 
 more += orange crystal statue.*comes? into view
 
@@ -3392,7 +3397,7 @@ more += Its appearance distorts for a moment
 more += Mara shimmers
 more += There is a horrible\, sudden wrenching feeling in your soul
 more += Mara seems to draw the.*out of itself
-more += Being near the torpor snail leaves you feeling lethargic
+#more += Being near the torpor snail leaves you feeling lethargic
 
 # Interrupts for Bad things
 more += (You are|You're) lethally poisoned
@@ -3401,7 +3406,7 @@ more += You need to eat something NOW
 #more += The.*is unaffected
 #more += You (become entangled|are caught) in (a|the) (web|net)
 #more += The air twists around and violently strikes you in flight
-more += The.*engulfs you in water
+#more += The.*engulfs you in water
 #more += The power of Zot is invoked against you
 more += The acid corrodes your
 more += Terrible wounds (open|spread) all over you
@@ -3409,7 +3414,7 @@ more += You suddenly stop moving
 #more += Your surroundings seem slightly different
 more += You feel a (horrible|terrible) chill
 #more += You are burned terribly
-more += The barbed spikes become lodged in your body
+#more += The barbed spikes become lodged in your body
 #more += mark forms upon you
 
 # Uniques
@@ -3496,9 +3501,9 @@ more += Xtahua.*(comes? into view|opens the)
 # More dangerous monsters
 #more += 's ghost.*(comes? into view|opens the)
 #more += A player ghost.*(comes? into view|opens the)
-more += shadow demons?.*(comes? into view|opens the)
-more += boggarts?.*(comes? into view|opens the)
-more += giant orange brains?.*(comes? into view|opens the)
+#more += shadow demons?.*(comes? into view|opens the)
+#more += boggarts?.*(comes? into view|opens the)
+#more += giant orange brains?.*(comes? into view|opens the)
 
 # Others
 
