@@ -921,9 +921,9 @@ more += giant orange brains?.*(comes? into view|opens the)
 
 # Others
 more += Something appears at your feet
-more += You can now
 more += You.*no longer.*bleed smoke
-more += You can no longer
+#more += You can now
+#more += You can no longer
 more += Your.*can no longer
 more += You feel monstrous
 more += Jiyva alters your body
@@ -3813,3 +3813,5 @@ note_xom_effects = true
 note_chat_messages = true
 
 #tile_player_tile = tile:MONS_BUTTERFLY
+
+use_animations -= player
